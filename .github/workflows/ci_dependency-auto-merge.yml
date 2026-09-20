@@ -1,4 +1,4 @@
-name: "CI: Dependabot auto merge"
+name: "CI: Dependency bot auto merge"
 
 "on":
   pull_request_target: # zizmor: ignore[dangerous-triggers] Needed for auto-merge; no PR code is checked out.
@@ -12,15 +12,17 @@ permissions:
   contents: read
 
 concurrency:
-  group: dependabot-auto-merge-${{ github.event.pull_request.number }}
+  group: dependency-bot-auto-merge-${{ github.event.pull_request.number }}
   cancel-in-progress: true
 
 jobs:
   enable-auto-merge:
     name: Enable auto-merge
     if: >-
-      github.event.pull_request.user.login == 'dependabot[bot]' &&
-      github.event.pull_request.user.id == 49699333 &&
+      (
+        (github.event.pull_request.user.login == 'dependabot[bot]' && github.event.pull_request.user.id == 49699333) ||
+        (github.event.pull_request.user.login == 'renovate[bot]' && github.event.pull_request.user.id == 29139614)
+      ) &&
       !github.event.pull_request.draft
     runs-on: ubuntu-latest
     permissions:
@@ -59,7 +61,7 @@ jobs:
 
             if [[ "$state" == "MERGED" ]]; then
               merge_sha="$(jq -r '.mergeCommit.oid' <<< "$pr_json")"
-              gh workflow run ci_dependabot-release-trigger.yml \
+              gh workflow run ci_dependency-release-trigger.yml \
                 --repo "$GITHUB_REPOSITORY" \
                 --ref "$DEFAULT_BRANCH" \
                 -f target_sha="$merge_sha"
